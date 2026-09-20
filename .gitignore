@@ -1,0 +1,54 @@
+# Virtual environments
+venv/
+env/
+ENV/
+pyenv/
+etlenv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+logs/
+*.log
+
+# Airflow
+airflow/logs/
+airflow/*.db
+airflow/logs/
+airflow/plugins/__pycache__/
+airflow/__pycache__/
+
+# Environment variables
+.env
+
+# Data files (raw data should not be in git)
+data/
+data/raw/*
+data/processed/*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database credentials
+config.ini
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yaml
+
+#Large files
+.csv
+.json
+
+#Python version
+.python-version
