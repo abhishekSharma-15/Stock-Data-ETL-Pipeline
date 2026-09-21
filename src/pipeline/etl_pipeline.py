@@ -19,7 +19,7 @@ class StockETLPipeline:
 
         end_date = self.repository.get_last_date(symbol=self.symbol)
 
-        # if last_update is None:
+
         raw_data = await fetch(
             symbol=self.symbol,
             session=self.session,
