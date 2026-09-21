@@ -1,8 +1,7 @@
 import aiohttp
+from datetime import datetime
 from src.ingestion.stock_fetcher import fetch
 from src.storage.stock_repository import StockRepository
-from src.utils.models import ETLDependencies
-from sqlalchemy.exc import IntegrityError, OperationalError
 
 class StockETLPipeline:
 
@@ -18,12 +17,17 @@ class StockETLPipeline:
 
     async def run(self) -> None:
 
-        # last_date = self.repository.get_last_date(symbol=self.symbol)
+        end_date = self.repository.get_last_date(symbol=self.symbol)
 
+        # if last_update is None:
         raw_data = await fetch(
             symbol=self.symbol,
             session=self.session,
+            start_date=datetime(2026,1,9),
         )
+
+        
+        
         
         # self.fetcher.save_raw_data(raw_data)
 

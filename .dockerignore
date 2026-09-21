@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyc
+*.pyd
+
+# Virtual Environments
+venv/
+env/
+pyenv/
+.etlenv/
+.env/
+
+# Git
+.git/
+.gitignore
+
+# Logs and data
+logs/
+data/
+
+# Docker
+.docker-compose.yml
+Dockerfile
+.dockercontainer/
+
+# OS Files
+.DS_store
+Thumbs.db
+
+# Large generated files
+.logs
+.csv
+.json

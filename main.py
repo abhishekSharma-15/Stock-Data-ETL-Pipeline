@@ -9,7 +9,7 @@ from src.storage.init.init_db import init_db
 async def main():
     logger = get_logger('Stock Price Pipeline')
 
-    engine = create_database_engine()_ 
+    engine = create_database_engine()
     init_db(engine)
 
     repository = StockRepository(engine)    

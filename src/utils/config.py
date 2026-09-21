@@ -5,6 +5,7 @@ from datetime import datetime
 
 # Base Directory of the project (3 levels up from this file).
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 # Directory from storing Raw Data.
 RAW_DATA_DIR = BASE_DIR / "data" / "raw"
@@ -13,7 +14,15 @@ RAW_DATA_DIR = BASE_DIR / "data" / "raw"
 START_DATE = datetime(2015, 1, 1)
 
 # Yahoo Finance API URL
-BASE_URL='https://query1.finance.yahoo.com/v8/finance/chart'
+YAHOO_URL='https://query1.finance.yahoo.com/v8/finance/chart'
+
+# Alpha Vantage API URL
+ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query?'
+FUNCTION = 'TIME_SERIES_DAILY'
+
+# Tiingo API URL
+TIINGO_URL = 'https://api.tiingo.com/tiingo/daily'
+TIINGO_API_TOKEN = os.getenv('API_TIINGO')
 
 # Directory for storing Processed / Structured Data.
 DATA_DIR = BASE_DIR / "data" 
@@ -38,7 +47,6 @@ ROLLING_WINDOWS = {
 }
 
 # Load environment variable
-load_dotenv(BASE_DIR / '.env')
 db_user = os.getenv('POSTGRES_USER', 'postgres')
 db_pass = os.getenv('SQL_PASSWORD') or os.getenv('POSTGRES_PASSWORD')
 db_host = os.getenv('DB_HOST', 'postgres')

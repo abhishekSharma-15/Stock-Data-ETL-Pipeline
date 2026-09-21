@@ -5,6 +5,9 @@ ENV/
 pyenv/
 etlenv/
 
+# Notebook
+.ipynb
+
 # Python cache
 __pycache__/
 *.pyc
@@ -41,10 +44,8 @@ Thumbs.db
 # Database credentials
 config.ini
 
-# Docker files
-Dockerfile
-.dockerignore
-docker-compose.yaml
+# Git Ignore
+.gitignore
 
 #Large files
 .csv
