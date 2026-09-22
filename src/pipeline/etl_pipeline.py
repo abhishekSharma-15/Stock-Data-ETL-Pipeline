@@ -3,6 +3,7 @@ from logging import Logger
 from src.utils.config import START_DATE
 from src.ingestion.stock_fetcher import fetch
 from src.transformation.stock_parser import parse
+from src.transformation.stock_transformer import transform
 from src.storage.relational_repository import RelationalRepository
 from src.storage.object_repository import ObjectRepository
 
@@ -59,18 +60,10 @@ class StockETLPipeline:
         )
 
         # ? raw_data is dict but gives exception to, data: dict[str, Any]
-        parsed_data = parse(logger=self.logger, data=raw_data) # type: ignore
-        print(parsed_data)
+        parsed_data = parse(logger=self.logger, symbol=self.symbol, data=raw_data) # type: ignore
 
-        # df_raw = self.dependencies.parser.parse(raw_data)
-        # # self.fetcher.save_csv(df_raw)
-
-        # # Transform   
-        # df_clean = self.dependencies.transformer.clean_data(df_raw)
-        # df_features = self.dependencies.transformer.add_features(df_clean)
+        transformed_data = transform(logger=self.logger, data=parsed_data)
         
-            
-        # # Load
         # try:
         #     stock_id  = self.dependencies.loader.upsert_stock(self.symbol)
         #     self.dependencies.loader.load_daily_prices(df_features, stock_id)

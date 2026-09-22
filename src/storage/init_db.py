@@ -5,8 +5,13 @@ async def init_db(engine: AsyncEngine) -> None:
 
     create_stock_info_table = text("""
         CREATE TABLE IF NOT EXISTS stock_info (
-            stock_id SERIAL PRIMARY KEY,
-            symbol VARCHAR(20) UNIQUE NOT NULL
+            stock_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            symbol VARCHAR(20) UNIQUE NOT NULL,
+            company_name VARCHAR(50),
+            exchange VARCHAR(10),
+            country VARCHAR(15),
+            currency VARCHAR(5),
+            security_type VARCHAR(7)
         );
     """)
 
@@ -20,11 +25,15 @@ async def init_db(engine: AsyncEngine) -> None:
             low FLOAT,
             close FLOAT,
             volume BIGINT,
+            
             daily_return FLOAT,
             log_return FLOAT,
-            volatility_20d FLOAT,
             ma_20d FLOAT,
             ma_50d FLOAT,
+            volatility_20d FLOAT,
+            volatility_20d_annualized FLOAT,
+            volume_ma_20d FLOAT,
+            volume_ratio_50d FLOAT,
 
             PRIMARY KEY (stock_id, date),
             
@@ -34,6 +43,6 @@ async def init_db(engine: AsyncEngine) -> None:
         )
     """)
 
-    async with engine.connect() as conn:
+    async with engine.begin() as conn:
         await conn.execute(create_stock_info_table)
         await conn.execute(create_stock_daily_price_table)

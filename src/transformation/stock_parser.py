@@ -6,6 +6,7 @@ from src.utils.models import StockPrice
 
 def parse(
     logger: Logger,
+    symbol: str,
     data: list[dict[str, Any]]
 ) -> list[StockPrice]:
 

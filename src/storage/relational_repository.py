@@ -18,8 +18,8 @@ class RelationalRepository:
         
         query = text("""
             SELECT MAX(dp.date)
-            FROM daily_prices AS dp
-            INNER JOIN stocks AS s 
+            FROM stock_daily_price AS dp
+            INNER JOIN stock_info AS s 
                 ON s.stock_id = dp.stock_id
             WHERE s.symbol = :symbol
         """)

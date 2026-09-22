@@ -1,79 +1,117 @@
-"""
-Stock Price Transformation Logic
-
-Responsibilities:
-- Clean raw OHLCV data
-- Compute returns- and volatility- based features
-"""
-
-import pandas as pd
 import numpy as np
-from src.utils.logger import get_logger
-from src.utils.config import ROLLING_WINDOWS
+import pandas as pd
+from logging import Logger
 
-class StockTransformer:
-    """
-    Cleans the raw equity price data (csv format) and applies transformation and features
-    """
+from src.utils.models import StockPrice
 
-    def __init__(self):
-        self.logger = get_logger(self.__class__.__name__)
+def transform(
+    logger: Logger,
+    data: list[StockPrice],
+) -> pd.DataFrame:
 
-    def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Clean and standarize raw equity price data. 
-        
-        Parameters:
-        -----------
-        df: pd.DataFrame
-            Parsed stock price data sorted by date.
+    if not data:
+        logger.warning('No data provided to Transformer')
+        return pd.DataFrame()
 
-        Returns:
-        --------
-        pd.DataFrame
-            Cleaned data ready for feature engineering.
-        """
+    df = pd.DataFrame([
+        {
+            "date": price.date,
+            "open": price.open,
+            "high": price.high,
+            "low": price.low,
+            "close": price.close,
+            "volume": price.volume,
+        }
+        for price in data
+    ])
 
-        self.logger.info(f'Cleaning data')
+    # 1. Data quality / ordering
+    df["date"] = pd.to_datetime(df["date"], utc=True)
+    df = (
+        df
+        .sort_values("date")
+        .drop_duplicates(subset="date", keep="last")
+        .reset_index(drop=True)
+    )
 
-        df = df.copy()
-        df['date'] = pd.to_datetime(df['date'])
-        df = df.sort_values('date')
+    # Ensure numerical columns have the expected type
+    numeric_columns = [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    df[numeric_columns] = df[numeric_columns].apply(
+        pd.to_numeric,
+        errors="coerce"
+    )
 
-        # Enforce numeric consistency for downstream calculations
-        numeric_cols = ['open', 'high', 'low', 'close', 'volume']
-        df[numeric_cols] = df[numeric_cols].astype(float)
+    # 2. Price-based returns
+    df["daily_return"] = df["close"].pct_change()
+    df["log_return"] = np.log(
+        df["close"] / df["close"].shift(1)
+    )
 
-        df = df.drop_duplicates(subset=['date'])
-        df = df.dropna(subset=['close'])
+    # 3. Intraday price features
+    df["intraday_range"] = (
+        (df["high"] - df["low"])
+        / df["open"]
+    )
+    df["intraday_return"] = (
+        (df["close"] - df["open"])
+        / df["open"]
+    )
 
-        return df
-    
-    def add_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Adds returns-based and trend-based features to cleaned data.
+    # 4. Moving averages
+    df["ma_20d"] = (
+        df["close"]
+        .rolling(window=20, min_periods=20)
+        .mean()
+    )
+    df["ma_50d"] = (
+        df["close"]
+        .rolling(window=50, min_periods=50)
+        .mean()
+    )
 
-        Parameters:
-        -----------
-        df: pd.DataFrame
-            Cleaned stock price data sorted by data.
+    # 5. Rolling volatility
+    df["volatility_20d"] = (
+        df["log_return"]
+        .rolling(window=20, min_periods=20)
+        .std()
+    )
+    df["volatility_20d_annualized"] = (
+        df["volatility_20d"] * np.sqrt(252)
+    )
 
-        Returns:
-        --------
-        pd.DataFrame
-            DataFrame with feature engineering data.
-        """
-        
-        self.logger.info(f'Adding features')
+    # 6. Rolling price statistics
+    df["rolling_high_20d"] = (
+        df["high"]
+        .rolling(window=20, min_periods=20)
+        .max()
+    )
+    df["rolling_low_20d"] = (
+        df["low"]
+        .rolling(window=20, min_periods=20)
+        .min()
+    )
 
-        df = df.copy()
-        df['daily_return'] = df['close'].pct_change()
+    # 8. Volume features
+    df["volume_ma_20d"] = (
+        df["volume"]
+        .rolling(window=20, min_periods=20)
+        .mean()
+    )
+    df["volume_ratio_20d"] = (
+        df["volume"] / df["volume_ma_20d"]
+    )
 
-        df['log_return'] = np.log(df['close']/df['close'].shift(1))
-        df['volatility_20d'] = (df['log_return'].rolling(ROLLING_WINDOWS['volatility']).std())
-        
-        df['ma_20d'] = df['close'].rolling(ROLLING_WINDOWS['ma_20d']).mean()
-        df['ma_50d'] = df['close'].rolling(ROLLING_WINDOWS['ma_50d']).mean()
+    # 10. Clean impossible values
+    df.replace(
+        [np.inf, -np.inf],
+        np.nan,
+        inplace=True
+    )
 
-        return df
-    
+    return df

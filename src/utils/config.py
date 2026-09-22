@@ -11,7 +11,7 @@ load_dotenv(BASE_DIR / '.env')
 RAW_DATA_DIR = BASE_DIR / "data" / "raw"
 
 # Start Date
-START_DATE = datetime(2026, 9, 19)
+START_DATE = datetime(2026, 9, 20)
 
 # Yahoo Finance API URL
 YAHOO_URL='https://query1.finance.yahoo.com/v8/finance/chart'
