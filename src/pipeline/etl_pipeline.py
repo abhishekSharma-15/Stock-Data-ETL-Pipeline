@@ -1,37 +1,67 @@
 import aiohttp
-from datetime import datetime
+from logging import Logger
+from src.utils.config import START_DATE
 from src.ingestion.stock_fetcher import fetch
-from src.storage.stock_repository import StockRepository
+from src.transformation.stock_parser import parse
+from src.storage.relational_repository import RelationalRepository
+from src.storage.object_repository import ObjectRepository
 
 class StockETLPipeline:
 
     def __init__(
         self,
+        logger: Logger,
         symbol: str,
-        repository: StockRepository,
+        relational_repository: RelationalRepository,
+        object_repository: ObjectRepository,
         session: aiohttp.ClientSession
     ):    
+        self.logger = logger
         self.symbol = symbol
-        self.repository = repository
+        self.relational_repository = relational_repository
+        self.object_repository = object_repository
         self.session = session
+        self.start_date = START_DATE
 
     async def run(self) -> None:
 
-        end_date = self.repository.get_last_date(symbol=self.symbol)
+        last_update_date = await self.relational_repository.get_last_date(symbol=self.symbol)
+        start_date = self.start_date if last_update_date is None else last_update_date
+        
+        try:
+            raw_data = await fetch(
+                logger=self.logger,
+                symbol=self.symbol,
+                session=self.session,
+                start_date=start_date,
+            )
 
+        except (aiohttp.ClientError, TimeoutError) as exec:
+            self.logger.error("Failed to fetch data for %s: %s", self.symbol, exec)
+            return 
 
-        raw_data = await fetch(
-            symbol=self.symbol,
-            session=self.session,
-            start_date=datetime(2026,1,9),
+        except Exception as exc:
+            self.logger.exception("Unexpected error during fetch for %s: %s", self.symbol, exc)
+            return
+
+        if not raw_data:
+            self.logger.warning("No data returned for %s, skipping storage.", self.symbol)
+            return
+
+        if last_update_date is None:
+            object_name = f'historical/{self.symbol}'
+        else:
+            object_name = f'daily/{start_date.date()}/{self.symbol}'
+
+        await self.object_repository.upload_object(
+            object_name=object_name,
+            payload=raw_data
         )
 
-        
-        
-        
-        # self.fetcher.save_raw_data(raw_data)
+        # ? raw_data is dict but gives exception to, data: dict[str, Any]
+        parsed_data = parse(logger=self.logger, data=raw_data) # type: ignore
+        print(parsed_data)
 
-        # # Parse
         # df_raw = self.dependencies.parser.parse(raw_data)
         # # self.fetcher.save_csv(df_raw)
 

@@ -1,20 +1,20 @@
 import pandas as pd
-from datetime import date
+from datetime import datetime
 from sqlalchemy import text
-from sqlalchemy import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-class StockRepository:
+class RelationalRepository:
 
     def __init__(
         self,
-        engine: Engine
+        engine: AsyncEngine
     ):
         self.engine = engine
 
-    def get_last_date(
+    async def get_last_date(
         self,
         symbol: str
-    ) -> date | None:
+    ) -> datetime | None:
         
         query = text("""
             SELECT MAX(dp.date)
@@ -24,8 +24,8 @@ class StockRepository:
             WHERE s.symbol = :symbol
         """)
 
-        with self.engine.begin() as conn:
-            result = conn.execute(
+        async with self.engine.connect() as conn:
+            result = await conn.execute(
                 query,
                 {'symbol': symbol}
             )

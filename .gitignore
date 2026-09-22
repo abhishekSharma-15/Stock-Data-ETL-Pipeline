@@ -53,3 +53,5 @@ config.ini
 
 #Python version
 .python-version
+
+# git pull --rebase origin main

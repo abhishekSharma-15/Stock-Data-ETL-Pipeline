@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-# from src.ingestion.stock_fetcher import StockFetcher
-from src.ingestion.stock_parser import StockDataParser
-from src.transformation.stock_transformer import StockTransformer
-# from storage.stock_repository import PostgresLoader
+from datetime import datetime
+
 
 @dataclass
-class ETLDependencies:
-    # fetcher: StockFetcher
-    parser: StockDataParser
-    transformer: StockTransformer
-    # loader: PostgresLoader
+class StockPrice:
+    date: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int

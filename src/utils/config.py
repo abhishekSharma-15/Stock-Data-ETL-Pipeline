@@ -11,7 +11,7 @@ load_dotenv(BASE_DIR / '.env')
 RAW_DATA_DIR = BASE_DIR / "data" / "raw"
 
 # Start Date
-START_DATE = datetime(2015, 1, 1)
+START_DATE = datetime(2026, 9, 19)
 
 # Yahoo Finance API URL
 YAHOO_URL='https://query1.finance.yahoo.com/v8/finance/chart'
@@ -46,6 +46,13 @@ ROLLING_WINDOWS = {
     'ma_50d': 50
 }
 
+# Minio Environment Variable
+MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'localhost:9000')
+MINIO_ACCESS_KEY= os.environ['MINIO_ACCESS_KEY']
+MINIO_SECRET_KEY= os.environ['MINIO_SECRET_KEY']
+MINIO_BUCKET= os.getenv('MINIO_BUCKET', 'stock-data-raw')
+MINIO_SECURE = os.getenv("MINIO_SECURE", "false").lower() == "true"
+
 # Load environment variable
 db_user = os.getenv('POSTGRES_USER', 'postgres')
 db_pass = os.getenv('SQL_PASSWORD') or os.getenv('POSTGRES_PASSWORD')
@@ -53,4 +60,4 @@ db_host = os.getenv('DB_HOST', 'postgres')
 db_name = os.getenv('POSTGRES_DB', 'stock_pipeline')
 db_port = os.getenv('DB_PORT', '5432')
 
-DATABASE_URL = f'postgresql+psycopg2://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}'
+DATABASE_URL = f'postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}'

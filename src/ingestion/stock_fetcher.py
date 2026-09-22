@@ -1,4 +1,5 @@
 from typing import Any
+from logging import Logger
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -6,7 +7,8 @@ from tenacity import (
     retry_if_exception_type,
 )
 from datetime import datetime
-from utils.exceptions import RateLimitError, UnauthorizationCallError
+from src.utils.config import START_DATE
+from src.utils.exceptions import RateLimitError, UnauthorizationCallError
 import asyncio
 import aiohttp
 from src.utils.config import (
@@ -15,7 +17,7 @@ from src.utils.config import (
     TIINGO_API_TOKEN
 )
 
-semaphore = asyncio.Semaphore(1)
+semaphore = asyncio.Semaphore(3)
 
 @retry(
     stop=stop_after_attempt(3),
@@ -33,13 +35,14 @@ semaphore = asyncio.Semaphore(1)
     reraise=True
 )
 async def fetch(
+    logger: Logger,
     symbol: str,
     session: aiohttp.ClientSession,
     start_date: datetime | None = None,
     end_date: datetime | None = None,
 ) -> dict[str, Any]:
 
-    start_date = start_date or datetime(2015, 1, 1)
+    start_date = start_date or START_DATE
     end_date = end_date or datetime.now()   
         
     url = f'{TIINGO_URL}/{symbol}/prices'
@@ -63,11 +66,13 @@ async def fetch(
         ) as response:
 
             if response.status == 429:
+                logger.error('Tiingo API rate limit exceeded.')
                 raise RateLimitError(
                     f"Tiingo rate limit exceeded for {symbol}"
                 )
 
             if response.status == 403:
+                logger.error('Unauthorized API call error.')
                 raise UnauthorizationCallError()
 
             response.raise_for_status()
