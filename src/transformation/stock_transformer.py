@@ -1,117 +1,68 @@
 import numpy as np
 import pandas as pd
 from logging import Logger
+from src.utils.interface import Transformer
+from src.utils.interface import FeatureCalculator
+from src.utils.models import StockPriceData
+from src.transformation.calculations.returns import ReturnsCalculator
+from src.transformation.calculations.intraday import IntradayFeaturesCalculator
+from src.transformation.calculations.moving_average import MovingAverageCalculator
+from src.transformation.calculations.volatility import VolatilityCalculator
+from src.transformation.calculations.rolling_extremes import RollingExtremesCalculator
+from src.transformation.calculations.volume import VolumeFeaturesCalculator
 
-from src.utils.models import StockPrice
+class StockTransformer(Transformer):
 
-def transform(
-    logger: Logger,
-    data: list[StockPrice],
-) -> pd.DataFrame:
+    def __init__(
+        self,
+        logger: Logger,
+        calculations: list[FeatureCalculator] | None = None
+    ) -> None:
 
-    if not data:
-        logger.warning('No data provided to Transformer')
-        return pd.DataFrame()
+        self.logger = logger
+        self.calculations = calculations or [
+            ReturnsCalculator(),
+            IntradayFeaturesCalculator(),
+            MovingAverageCalculator(),
+            VolatilityCalculator(),
+            RollingExtremesCalculator(),
+            VolumeFeaturesCalculator(),
+        ]
 
-    df = pd.DataFrame([
-        {
-            "date": price.date,
-            "open": price.open,
-            "high": price.high,
-            "low": price.low,
-            "close": price.close,
-            "volume": price.volume,
-        }
-        for price in data
-    ])
+    def transform(self, data: list[StockPriceData]) -> pd.DataFrame:
 
-    # 1. Data quality / ordering
-    df["date"] = pd.to_datetime(df["date"], utc=True)
-    df = (
-        df
-        .sort_values("date")
-        .drop_duplicates(subset="date", keep="last")
-        .reset_index(drop=True)
-    )
+        if not data:
+            self.logger.warning('No data provided to Transformer')
+            return pd.DataFrame()
 
-    # Ensure numerical columns have the expected type
-    numeric_columns = [
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume",
-    ]
-    df[numeric_columns] = df[numeric_columns].apply(
-        pd.to_numeric,
-        errors="coerce"
-    )
+        df = self._to_dataframe(data)
+        df = self._clean_and_order(df)
 
-    # 2. Price-based returns
-    df["daily_return"] = df["close"].pct_change()
-    df["log_return"] = np.log(
-        df["close"] / df["close"].shift(1)
-    )
+        for calculator in self.calculations:
+            df = calculator.calculate(df)
 
-    # 3. Intraday price features
-    df["intraday_range"] = (
-        (df["high"] - df["low"])
-        / df["open"]
-    )
-    df["intraday_return"] = (
-        (df["close"] - df["open"])
-        / df["open"]
-    )
+        return self._clean_invalid_values(df)
 
-    # 4. Moving averages
-    df["ma_20d"] = (
-        df["close"]
-        .rolling(window=20, min_periods=20)
-        .mean()
-    )
-    df["ma_50d"] = (
-        df["close"]
-        .rolling(window=50, min_periods=50)
-        .mean()
-    )
+    def _to_dataframe(self, data: list[StockPriceData]) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {
+                    "date": p.date, "open": p.open, "high": p.high,
+                    "low": p.low, "close": p.close, "volume": p.volume,
+                }
+                for p in data
+            ]
+        )
 
-    # 5. Rolling volatility
-    df["volatility_20d"] = (
-        df["log_return"]
-        .rolling(window=20, min_periods=20)
-        .std()
-    )
-    df["volatility_20d_annualized"] = (
-        df["volatility_20d"] * np.sqrt(252)
-    )
+    def _clean_and_order(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df["date"] = pd.to_datetime(df["date"], utc=True)
 
-    # 6. Rolling price statistics
-    df["rolling_high_20d"] = (
-        df["high"]
-        .rolling(window=20, min_periods=20)
-        .max()
-    )
-    df["rolling_low_20d"] = (
-        df["low"]
-        .rolling(window=20, min_periods=20)
-        .min()
-    )
+        return (
+            df.sort_values("date")
+              .drop_duplicates(subset="date", keep="last")
+              .reset_index(drop=True)
+        )
 
-    # 8. Volume features
-    df["volume_ma_20d"] = (
-        df["volume"]
-        .rolling(window=20, min_periods=20)
-        .mean()
-    )
-    df["volume_ratio_20d"] = (
-        df["volume"] / df["volume_ma_20d"]
-    )
-
-    # 10. Clean impossible values
-    df.replace(
-        [np.inf, -np.inf],
-        np.nan,
-        inplace=True
-    )
-
-    return df
+    def _clean_invalid_values(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.replace([np.inf, -np.inf], np.nan)

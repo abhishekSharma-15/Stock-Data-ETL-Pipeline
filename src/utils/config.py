@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime
+from datetime import date
 
 MAX_CONCURRENCY: int = 5
 
@@ -13,7 +13,7 @@ load_dotenv(BASE_DIR / '.env')
 RAW_DATA_DIR = BASE_DIR / "data" / "raw"
 
 # Start Date
-START_DATE = datetime(2026, 9, 20)
+START_DATE = date(2026, 9, 20)
 
 # Yahoo Finance API URL
 YAHOO_URL='https://query1.finance.yahoo.com/v8/finance/chart'

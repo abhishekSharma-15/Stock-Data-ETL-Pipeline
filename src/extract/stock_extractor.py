@@ -7,6 +7,7 @@ from tenacity import (
     retry_if_exception_type,
 )
 from datetime import datetime, date
+from src.utils.interface import Extractor
 from src.utils.config import START_DATE
 from src.utils.models import ExtractorResult, RawStockPrice
 from src.utils.exceptions import RateLimitError, UnauthorizationCallError
@@ -18,7 +19,7 @@ from src.utils.config import (
     TIINGO_API_TOKEN
 )
 
-class StockExtractor:
+class StockExtractor(Extractor):
 
     def __init__(
         self,
@@ -31,22 +32,63 @@ class StockExtractor:
         self.semaphore = semaphore
         self.url = f'{TIINGO_URL}'
 
-    @retry(
-            stop=stop_after_attempt(3),
-            wait=wait_exponential(
-                multiplier=1,
-                min=2,
-                max=10
+    async def extract(
+        self,
+        symbol: str,
+        from_date: date | None = None,
+        to_date: date | None = None,
+    ) -> ExtractorResult | Exception:
+
+        start_date = from_date or START_DATE
+        end_date = to_date or datetime.now()
+
+        if isinstance(start_date, datetime):
+            start_date = start_date.date()
+        if isinstance(end_date, datetime):
+            end_date = end_date.date()
+
+        meta_url = self.url + f'/{symbol}'
+        data_url = self.url + f'/{symbol}/prices'
+        headers = {
+            "Authorization": f"Token {TIINGO_API_TOKEN}",
+            "Content-Type": "application/json",
+        }
+        params={
+            'startDate': start_date.strftime("%Y-%m-%d"),
+            'endDate': end_date.strftime("%Y-%m-%d"),
+        }
+
+        return ExtractorResult(
+            meta=await self._fetch_meta(
+                url=meta_url,
+                headers=headers,
+                params=params,
+                symbol=symbol
             ),
-            retry=retry_if_exception_type(
-                (
-                    asyncio.TimeoutError,
-                    aiohttp.ClientError,
-                    RateLimitError
-                )
-            ),
-            reraise=True
+            data=await self._fetch_data(
+                url=data_url,
+                headers=headers,
+                params=params,
+                symbol=symbol
+            )
         )
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(
+            multiplier=2,
+            min=2,
+            max=10
+        ),
+        retry=retry_if_exception_type(
+            (
+                asyncio.TimeoutError,
+                aiohttp.ClientError,
+                RateLimitError
+            )
+        ),
+        reraise=True
+    )
     async def _fetch_meta(
         self,
         url: str,
@@ -79,7 +121,7 @@ class StockExtractor:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(
-            multiplier=1,
+            multiplier=2,
             min=2,
             max=10
         ),
@@ -120,48 +162,3 @@ class StockExtractor:
 
                 data: list[RawStockPrice] = await response.json()
                 return data
-    
-    async def extract(
-        self,
-        symbol: str,
-        from_date: date | None = None,
-        to_date: date | None = None,
-    ) -> ExtractorResult | Exception:
-
-        start_date = from_date or START_DATE
-        end_date = to_date or datetime.now()
-
-        if isinstance(start_date, datetime):
-            start_date = start_date.date()
-        if isinstance(end_date, datetime):
-            end_date = end_date.date()
-
-        meta_url = self.url + f'/{symbol}'
-        data_url = self.url + f'/{symbol}/prices'
-        headers = {
-            "Authorization": f"Token {TIINGO_API_TOKEN}",
-            "Content-Type": "application/json",
-        }
-        params={
-            'startDate': start_date.strftime("%Y-%m-%d"),
-            'endDate': end_date.strftime("%Y-%m-%d"),
-        }
-
-        meta = await self._fetch_meta(
-            url=meta_url,
-            headers=headers,
-            params=params,
-            symbol=symbol
-        )
-
-        data = await self._fetch_data(
-            url=data_url,
-            headers=headers,
-            params=params,
-            symbol=symbol
-        )
-
-        return ExtractorResult(
-            meta=meta,
-            data=data
-        )

@@ -2,19 +2,14 @@ from minio import Minio
 import json
 import asyncio
 import io
-from src.utils.models import ExtractorResult
+from src.utils.interface import ObjectRepo
 from src.utils.config import MINIO_BUCKET
 
-class ObjectRepository:
+class ObjectRepository(ObjectRepo):
 
     def __init__(self, client: Minio):
-        self.client = client
+        self.client = client    
         self.bucket_name = MINIO_BUCKET
-        self._ensure_bucket_exists()
-
-    def _ensure_bucket_exists(self) -> None:
-        if not self.client.bucket_exists(self.bucket_name):
-            self.client.make_bucket(self.bucket_name)
 
     async def upload_object(
         self,

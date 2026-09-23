@@ -2,17 +2,18 @@ import asyncio
 import aiohttp
 
 from src.utils.logger import get_logger
-from src.utils.config import STOCK_SYMBOLS, MAX_CONCURRENCY
-from src.utils.models import ETLDependencies
+from src.utils.config import STOCK_SYMBOLS, MAX_CONCURRENCY, MINIO_BUCKET
 from src.extract.stock_extractor import StockExtractor
 from src.transformation.stock_parser import StockParser
+from src.transformation.stock_transformer import StockTransformer
 from src.orchestration.orchestrator import StockOrchestrator
-from src.storage.relational_repository import RelationalRepository
-from src.storage.object_repository import ObjectRepository
-from src.storage.engine import create_database_engine
-from src.storage.client import create_object_storage_client
-from src.storage.bucket import configure_versioning
-from src.storage.init_db import init_db
+from src.storage.relational.operations.executor import SQLExecutor
+from src.storage.relational.repository import RelationalRepository
+from src.storage.object.repository import ObjectRepository
+from src.storage.relational.engine import create_database_engine
+from src.storage.object.client import create_object_storage_client
+from src.storage.object.bucket import configure_versioning
+from src.storage.relational.init_db import init_db
 
 
 async def main():
@@ -24,7 +25,7 @@ async def main():
         logger.info("Relational database initialized")
 
         client = create_object_storage_client()
-        configure_versioning(client)
+        configure_versioning(client=client,bucket=MINIO_BUCKET)
         logger.info("Object storage initialized")
 
         semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
@@ -36,20 +37,19 @@ async def main():
                 semaphore=semaphore,
             )
             parser = StockParser(logger=logger)
-            relational_repository = RelationalRepository(engine=engine)
+            transformer = StockTransformer(logger=logger)
+            executor = SQLExecutor(engine=engine)
+            relational_repository = RelationalRepository(executor=executor)
             object_repository = ObjectRepository(client=client)
-
-            dependencies = ETLDependencies(
-                extractor=extractor,
-                parser=parser,
-                relational_storage=relational_repository,
-                object_storage=object_repository
-            )
         
             orchestrator = StockOrchestrator(
                 logger=logger,
                 symbols=STOCK_SYMBOLS,
-                dependencies=dependencies,
+                extractor=extractor,
+                parser=parser,
+                transformer=transformer,
+                relational_storage=relational_repository,
+                object_storage=object_repository
             )
 
             await orchestrator.run()
@@ -57,7 +57,6 @@ async def main():
     except Exception as e:
         logger.exception("Stock Price Pipeline failed %s", e)
         raise
-
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,18 +1,8 @@
+import pandas as pd
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 from typing import TypedDict
-from src.extract.stock_extractor import StockExtractor
-from src.transformation.stock_parser import StockParser
-from src.storage.relational_repository import RelationalRepository
-from src.storage.object_repository import ObjectRepository
-
-@dataclass
-class ETLDependencies:
-    extractor: StockExtractor
-    parser: StockParser
-    # transformer: str
-    relational_storage: RelationalRepository
-    object_storage: ObjectRepository
+from enum import Enum
 
 class RawStockPrice(TypedDict):
     date: str
@@ -35,9 +25,21 @@ class StockMetaData:
 
 @dataclass
 class StockPriceData:
-    date: datetime
+    date: date
     open: float
     high: float
     low: float
     close: float
     volume: int
+
+class PipelineStatus(Enum):
+    SUCCESS = "success"
+    RATE_LIMITED = "rate_limited"
+    NO_DATA = "no_data"
+    FAILED = "failed"
+
+@dataclass
+class PipelineResult:
+    symbol: str
+    status: PipelineStatus
+    error: Exception | None = None

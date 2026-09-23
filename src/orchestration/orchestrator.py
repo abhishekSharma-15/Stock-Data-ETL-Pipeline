@@ -1,6 +1,7 @@
 import asyncio
 from logging import Logger
-from src.utils.models import ETLDependencies
+from src.utils.interface import Extractor, Parser, Transformer, RelationalRepo, ObjectRepo
+from src.utils.models import PipelineStatus
 from src.pipeline.etl_pipeline import StockETLPipeline
 
 class StockOrchestrator:
@@ -9,21 +10,53 @@ class StockOrchestrator:
         self,
         logger: Logger,
         symbols: list[str],
-        dependencies: ETLDependencies,
+        extractor: Extractor,
+        parser: Parser,
+        transformer: Transformer,
+        relational_storage: RelationalRepo,
+        object_storage: ObjectRepo
     ):
         self.logger = logger
         self.symbols = symbols
-        self.dependencies = dependencies
+        self.extractor = extractor
+        self.parser = parser
+        self.transformer = transformer
+        self.relational_storage = relational_storage
+        self.object_storage = object_storage
 
     async def run(self):
         tasks = [
             StockETLPipeline(
                 logger=self.logger,
                 symbol=symbol,
-                dependencies=self.dependencies
+                extractor=self.extractor,
+                parser=self.parser,
+                transformer=self.transformer,
+                relational_repository=self.relational_storage,
+                object_repository=self.object_storage
             ).run()
             for symbol in self.symbols
         ]
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks)
 
-        self.logger.info(f'Completed Ingestion for {self.symbols}')
+        successful = [
+            result for result in results
+            if result.status == PipelineStatus.SUCCESS
+        ]
+
+        rate_limited = [
+            result for result in results
+            if result.status == PipelineStatus.RATE_LIMITED
+        ]
+
+        failed = [
+            result for result in results
+            if result.status == PipelineStatus.FAILED
+        ]
+
+        self.logger.info(
+            "Ingestion completed: %d succeeded, %d rate limited, %d failed",
+            len(successful),
+            len(rate_limited),
+            len(failed),
+        )

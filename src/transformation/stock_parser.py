@@ -1,10 +1,9 @@
-from typing import Any
-import pandas as pd
 from datetime import datetime
 from logging import Logger
 from src.utils.models import StockPriceData, StockMetaData, RawStockPrice
+from src.utils.interface import Parser
 
-class StockParser:
+class StockParser(Parser):
 
     def __init__(
         self,
@@ -24,8 +23,7 @@ class StockParser:
                 exchange=data['exchangeCode']
             )
         
-
-    def parse_data(self, data: list[RawStockPrice]):
+    def parse_data(self, data: list[RawStockPrice]) -> list[StockPriceData]:
         return [
             StockPriceData(
                 date=datetime.fromisoformat(
