@@ -1,7 +1,11 @@
 import asyncio
+import aiohttp
 
 from src.utils.logger import get_logger
-from src.utils.config import STOCK_SYMBOLS
+from src.utils.config import STOCK_SYMBOLS, MAX_CONCURRENCY
+from src.utils.models import ETLDependencies
+from src.extract.stock_extractor import StockExtractor
+from src.transformation.stock_parser import StockParser
 from src.orchestration.orchestrator import StockOrchestrator
 from src.storage.relational_repository import RelationalRepository
 from src.storage.object_repository import ObjectRepository
@@ -23,16 +27,32 @@ async def main():
         configure_versioning(client)
         logger.info("Object storage initialized")
 
-        relational_repository = RelationalRepository(engine=engine)
-        object_repository = ObjectRepository(client=client)
-        orchestrator = StockOrchestrator(
-            logger=logger,
-            relational_repository=relational_repository,
-            object_repository=object_repository,
-            symbols=STOCK_SYMBOLS,
-        )
+        semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
 
-        await orchestrator.run()
+        async with aiohttp.ClientSession() as session:
+            extractor = StockExtractor(
+                logger=logger,
+                session=session,
+                semaphore=semaphore,
+            )
+            parser = StockParser(logger=logger)
+            relational_repository = RelationalRepository(engine=engine)
+            object_repository = ObjectRepository(client=client)
+
+            dependencies = ETLDependencies(
+                extractor=extractor,
+                parser=parser,
+                relational_storage=relational_repository,
+                object_storage=object_repository
+            )
+        
+            orchestrator = StockOrchestrator(
+                logger=logger,
+                symbols=STOCK_SYMBOLS,
+                dependencies=dependencies,
+            )
+
+            await orchestrator.run()
 
     except Exception as e:
         logger.exception("Stock Price Pipeline failed %s", e)

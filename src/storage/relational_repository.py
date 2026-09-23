@@ -11,7 +11,7 @@ class RelationalRepository:
     ):
         self.engine = engine
 
-    async def get_last_date(
+    async def read_lastest_date(
         self,
         symbol: str
     ) -> datetime | None:
@@ -32,25 +32,52 @@ class RelationalRepository:
             
         return result.scalar_one()
 
-    # def upsert_stock(self, symbol: str) -> int:
-
-    #     query = """
-    #     INSERT INTO stocks (symbol) 
-    #     VALUES (:symbol) 
-    #     ON CONFLICT (symbol) DO NOTHING;
-    #     """
-
-    #     select_query = """
-    #     SELECT stock_id 
-    #     FROM stocks 
-    #     where symbol = :symbol;
-    #     """
-
-    #     with self.engine.begin() as conn:
-    #         conn.execute(text(query), {'symbol':symbol})
-    #         result = conn.execute(text(select_query), {'symbol':symbol}).fetchone()
+    async def create_stock_info(
+        self,
+        symbol: str,
+        company_name: str,
+        exchange: str
+    ) -> int:
         
-    #     return result[0]
+        insert_query = text("""
+            INSERT INTO stock_info (
+                symbol, 
+                company_name,
+                exchange
+            )
+            VALUES (
+                :symbol,
+                :company_name,
+                :exchange
+            )
+            ON CONFLICT (symbol, company_name, exchange DO NOTHING)
+            RETURNING stock_id;
+        """)
+
+        async with self.engine.begin() as conn:
+            result = await conn.execute(
+                insert_query,
+                {
+                    'symbol': symbol,
+                    'company_name': company_name,
+                    'exchange': exchange
+                }
+            )
+
+            stock_id = result.scalar_one_or_none()
+            if stock_id is not None:
+                return stock_id
+
+            result = await conn.execute(
+                text("""
+                    SELECT stock_id
+                    FROM stock_info
+                    WHERE symbol = :symbol;
+                """),
+                {"symbol": symbol},
+            )
+
+            return result.scalar_one()
 
     # def load_daily_prices(self, df: pd.DataFrame, stock_id: int):
 

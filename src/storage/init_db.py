@@ -8,10 +8,7 @@ async def init_db(engine: AsyncEngine) -> None:
             stock_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
             symbol VARCHAR(20) UNIQUE NOT NULL,
             company_name VARCHAR(50),
-            exchange VARCHAR(10),
-            country VARCHAR(15),
-            currency VARCHAR(5),
-            security_type VARCHAR(7)
+            exchange VARCHAR(10)
         );
     """)
 

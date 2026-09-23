@@ -2,6 +2,7 @@ from minio import Minio
 import json
 import asyncio
 import io
+from src.utils.models import ExtractorResult
 from src.utils.config import MINIO_BUCKET
 
 class ObjectRepository:

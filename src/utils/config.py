@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 from datetime import datetime
 
+MAX_CONCURRENCY: int = 5
+
 # Base Directory of the project (3 levels up from this file).
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / '.env')
@@ -21,7 +23,7 @@ ALPHA_VANTAGE_URL = 'https://www.alphavantage.co/query?'
 FUNCTION = 'TIME_SERIES_DAILY'
 
 # Tiingo API URL
-TIINGO_URL = 'https://api.tiingo.com/tiingo/daily'
+TIINGO_URL = os.getenv('TIINGO_URL')
 TIINGO_API_TOKEN = os.getenv('API_TIINGO')
 
 # Directory for storing Processed / Structured Data.
