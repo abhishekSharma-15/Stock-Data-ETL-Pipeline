@@ -1,8 +1,8 @@
-import pandas as pd
 from dataclasses import dataclass
 from datetime import date
-from typing import TypedDict
 from enum import Enum
+from typing import TypedDict
+
 
 class RawStockPrice(TypedDict):
     date: str
@@ -12,16 +12,19 @@ class RawStockPrice(TypedDict):
     close: float
     volume: int
 
+
 @dataclass
 class ExtractorResult:
     meta: dict[str, str]
     data: list[RawStockPrice]
+
 
 @dataclass
 class StockMetaData:
     symbol: str
     company_name: str
     exchange: str
+
 
 @dataclass
 class StockPriceData:
@@ -32,11 +35,13 @@ class StockPriceData:
     close: float
     volume: int
 
+
 class PipelineStatus(Enum):
     SUCCESS = "success"
     RATE_LIMITED = "rate_limited"
     NO_DATA = "no_data"
     FAILED = "failed"
+
 
 @dataclass
 class PipelineResult:

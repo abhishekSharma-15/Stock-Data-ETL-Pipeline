@@ -1,24 +1,24 @@
-import pandas as pd
 from datetime import date
-from typing import Any
+
+import pandas as pd
+
 from src.storage.relational.operations.executor import SQLExecutor
 from src.storage.relational.queries.stock_info import INSERT_STOCK_INFO
 from src.storage.relational.queries.stock_prices import GET_LATEST_DATE
 from src.utils.interface import RelationalRepo
 from src.utils.models import StockMetaData
 
-class RelationalRepository(RelationalRepo):
 
-    def __init__(
-        self,
-        executor: SQLExecutor
-    ):
+class RelationalRepository(RelationalRepo):
+    def __init__(self, executor: SQLExecutor):
         self.executor = executor
 
-    async def get_latest_date(self, symbol: str,) -> date | None:
+    async def get_latest_date(
+        self,
+        symbol: str,
+    ) -> date | None:
         result = await self.executor.fetch_one(
-            query=GET_LATEST_DATE,
-            params={'symbol': symbol}
+            query=GET_LATEST_DATE, params={"symbol": symbol}
         )
         return result[0] if result else None
 
@@ -26,10 +26,10 @@ class RelationalRepository(RelationalRepo):
         result = await self.executor.execute_returning_one(
             query=INSERT_STOCK_INFO,
             params={
-                'symbol': data.symbol,
-                'company_name': data.company_name,
-                'exchange': data.exchange
-            }
+                "symbol": data.symbol,
+                "company_name": data.company_name,
+                "exchange": data.exchange,
+            },
         )
         return result if result else None
 
@@ -38,14 +38,7 @@ class RelationalRepository(RelationalRepo):
         stock_id: int,
         data: pd.DataFrame,
     ) -> None:
-        await self.executor.execute(
-            query=GET_LATEST_DATE,
-            params={
-                
-            }
-        )
-
-
+        await self.executor.execute(query=GET_LATEST_DATE, params={})
 
     # def load_daily_prices(self, df: pd.DataFrame, stock_id: int):
 
@@ -54,8 +47,8 @@ class RelationalRepository(RelationalRepo):
 
     #     df = df[
     #         [
-    #             "stock_id", 'date', 'open', 'high', 'low', 'close', 'volume', 
-    #             'daily_return', 'log_return', 'volatility_20d', 'ma_20d', 'ma_50d' 
+    #             "stock_id", 'date', 'open', 'high', 'low', 'close', 'volume',
+    #             'daily_return', 'log_return', 'volatility_20d', 'ma_20d', 'ma_50d'
     #         ]
     #     ]
 
@@ -72,7 +65,7 @@ class RelationalRepository(RelationalRepo):
     #             :daily_return, :log_return, :volatility_20d, :ma_20d, :ma_50d
     #         )
     #         ON CONFLICT (stock_id, date)
-    #         DO UPDATE SET 
+    #         DO UPDATE SET
     #             open = EXCLUDED.open,
     #             high = EXCLUDED.high,
     #             low = EXCLUDED.low,
@@ -81,7 +74,7 @@ class RelationalRepository(RelationalRepo):
     #             daily_return = EXCLUDED.daily_return,
     #             log_return = EXCLUDED.log_return,
     #             volatility_20d = EXCLUDED.volatility_20d,
-    #             ma_20d = EXCLUDED.ma_20d, 
+    #             ma_20d = EXCLUDED.ma_20d,
     #             ma_50d = EXCLUDED.ma_50d;
     #     """)
 

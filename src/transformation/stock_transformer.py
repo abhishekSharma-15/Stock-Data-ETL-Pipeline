@@ -1,22 +1,21 @@
+from logging import Logger
+
 import numpy as np
 import pandas as pd
-from logging import Logger
-from src.utils.interface import Transformer
-from src.utils.interface import FeatureCalculator
-from src.utils.models import StockPriceData
-from src.transformation.calculations.returns import ReturnsCalculator
+
 from src.transformation.calculations.intraday import IntradayFeaturesCalculator
 from src.transformation.calculations.moving_average import MovingAverageCalculator
-from src.transformation.calculations.volatility import VolatilityCalculator
+from src.transformation.calculations.returns import ReturnsCalculator
 from src.transformation.calculations.rolling_extremes import RollingExtremesCalculator
+from src.transformation.calculations.volatility import VolatilityCalculator
 from src.transformation.calculations.volume import VolumeFeaturesCalculator
+from src.utils.interface import FeatureCalculator, Transformer
+from src.utils.models import StockPriceData
+
 
 class StockTransformer(Transformer):
-
     def __init__(
-        self,
-        logger: Logger,
-        calculations: list[FeatureCalculator] | None = None
+        self, logger: Logger, calculations: list[FeatureCalculator] | None = None
     ) -> None:
 
         self.logger = logger
@@ -32,7 +31,7 @@ class StockTransformer(Transformer):
     def transform(self, data: list[StockPriceData]) -> pd.DataFrame:
 
         if not data:
-            self.logger.warning('No data provided to Transformer')
+            self.logger.warning("No data provided to Transformer")
             return pd.DataFrame()
 
         df = self._to_dataframe(data)
@@ -47,8 +46,12 @@ class StockTransformer(Transformer):
         return pd.DataFrame(
             [
                 {
-                    "date": p.date, "open": p.open, "high": p.high,
-                    "low": p.low, "close": p.close, "volume": p.volume,
+                    "date": p.date,
+                    "open": p.open,
+                    "high": p.high,
+                    "low": p.low,
+                    "close": p.close,
+                    "volume": p.volume,
                 }
                 for p in data
             ]
@@ -60,8 +63,8 @@ class StockTransformer(Transformer):
 
         return (
             df.sort_values("date")
-              .drop_duplicates(subset="date", keep="last")
-              .reset_index(drop=True)
+            .drop_duplicates(subset="date", keep="last")
+            .reset_index(drop=True)
         )
 
     def _clean_invalid_values(self, df: pd.DataFrame) -> pd.DataFrame:

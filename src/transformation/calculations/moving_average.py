@@ -1,6 +1,9 @@
-import pandas as pd
 from dataclasses import dataclass
+
+import pandas as pd
+
 from src.utils.interface import FeatureCalculator
+
 
 @dataclass
 class MovingAverageCalculator(FeatureCalculator):
@@ -10,7 +13,5 @@ class MovingAverageCalculator(FeatureCalculator):
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         for w in self.windows:
-            df[f"ma_{w}d"] = (
-                df[self.column].rolling(window=w, min_periods=w).mean()
-            )
+            df[f"ma_{w}d"] = df[self.column].rolling(window=w, min_periods=w).mean()
         return df

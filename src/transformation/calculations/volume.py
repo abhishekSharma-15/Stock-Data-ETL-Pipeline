@@ -1,6 +1,9 @@
-import pandas as pd
 from dataclasses import dataclass
+
+import pandas as pd
+
 from src.utils.interface import FeatureCalculator
+
 
 @dataclass
 class VolumeFeaturesCalculator(FeatureCalculator):

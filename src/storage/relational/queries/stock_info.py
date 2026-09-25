@@ -9,7 +9,7 @@
 #         :company_name,
 #         :exchange
 #     )
-#     ON CONFLICT (symbol) DO UPDATE 
+#     ON CONFLICT (symbol) DO UPDATE
 #         SET company_name = EXCLUDED.company_name
 #     RETURNING stock_id;
 # """

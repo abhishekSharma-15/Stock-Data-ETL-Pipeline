@@ -1,6 +1,6 @@
 ruff check . --fix
 ruff format .
-mypy .
+python -m mypy .
 pytest
 pytest --cov=src
 deptry .

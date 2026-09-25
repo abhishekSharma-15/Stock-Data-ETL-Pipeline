@@ -1,7 +1,10 @@
-import pandas as pd
-import numpy as np
 from dataclasses import dataclass
+
+import numpy as np
+import pandas as pd
+
 from src.utils.interface import FeatureCalculator
+
 
 @dataclass
 class VolatilityCalculator(FeatureCalculator):
@@ -11,8 +14,12 @@ class VolatilityCalculator(FeatureCalculator):
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         if "log_return" not in df.columns:
-            raise ValueError("VolatilityCalculator requires 'log_return'; run ReturnsCalculator first.")
+            raise ValueError(
+                "VolatilityCalculator requires 'log_return'; run ReturnsCalculator first."
+            )
         col = f"volatility_{self.window}d"
-        df[col] = df["log_return"].rolling(window=self.window, min_periods=self.window).std()
+        df[col] = (
+            df["log_return"].rolling(window=self.window, min_periods=self.window).std()
+        )
         df[f"{col}_annualized"] = df[col] * np.sqrt(self.trading_days_per_year)
         return df

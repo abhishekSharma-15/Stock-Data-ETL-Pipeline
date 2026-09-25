@@ -1,0 +1,5 @@
+[tool.mypy]
+explicit_package_bases = true
+
+# Ignore missing stubs across all third-party libraries globally
+ignore_missing_imports = true

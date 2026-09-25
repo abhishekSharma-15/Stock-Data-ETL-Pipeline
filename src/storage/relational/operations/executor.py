@@ -1,13 +1,11 @@
 from typing import Any
-from sqlalchemy.ext.asyncio import AsyncEngine 
+
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
+
 
 class SQLExecutor:
-
-    def __init__(
-        self,
-        engine: AsyncEngine
-    ):
+    def __init__(self, engine: AsyncEngine):
         self.engine = engine
 
     async def fetch_one(

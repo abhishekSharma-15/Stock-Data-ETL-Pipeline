@@ -1,5 +1,7 @@
 import pandas as pd
+
 from src.utils.interface import FeatureCalculator
+
 
 class IntradayFeaturesCalculator(FeatureCalculator):
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
