@@ -11,7 +11,7 @@ from src.storage.relational.operations.executor import SQLExecutor
 from src.storage.relational.repository import RelationalRepository
 from src.storage.object.repository import ObjectRepository
 from src.storage.relational.engine import create_database_engine
-from src.storage.object.client import create_object_storage_client
+from src.storage.object.client import create_minio_client
 from src.storage.object.bucket import configure_versioning
 from src.storage.relational.init_db import init_db
 
@@ -24,7 +24,7 @@ async def main():
         await init_db(engine)
         logger.info("Relational database initialized")
 
-        client = create_object_storage_client()
+        client = create_minio_client()
         configure_versioning(client=client,bucket=MINIO_BUCKET)
         logger.info("Object storage initialized")
 

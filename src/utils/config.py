@@ -48,6 +48,9 @@ ROLLING_WINDOWS = {
     'ma_50d': 50
 }
 
+AWS_ACCESS_KEY_ID=os.environ['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY=os.environ['AWS_SECRET_ACCESS_KEY']
+
 # Minio Environment Variable
 MINIO_ENDPOINT = os.getenv('MINIO_ENDPOINT', 'localhost:9000')
 MINIO_ACCESS_KEY= os.environ['MINIO_ACCESS_KEY']
