@@ -8,6 +8,15 @@ etlenv/
 # Notebook
 .ipynb
 
+# mypy cache
+.mypy_cache
+
+# pytest cache
+.pytest_cache
+
+# ruff cache
+.ruff_cache
+
 # Python cache
 __pycache__/
 *.pyc

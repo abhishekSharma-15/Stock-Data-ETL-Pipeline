@@ -76,12 +76,15 @@ class StockExtractor(Extractor):
         self, url: str, params: dict[str, str], headers: dict[str, str], symbol: str
     ) -> dict[str, str]:
 
-        async with self.semaphore, self.session.get(
-            url=url,
-            headers=headers,
-            params=params,
-            timeout=aiohttp.ClientTimeout(total=float(API_TIMEOUT)),
-        ) as response:
+        async with (
+            self.semaphore,
+            self.session.get(
+                url=url,
+                headers=headers,
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=float(API_TIMEOUT)),
+            ) as response,
+        ):
             if response.status == 429:
                 self.logger.warning(
                     "Tiingo rate limit hit for %s; retrying with backoff...", symbol
@@ -114,12 +117,15 @@ class StockExtractor(Extractor):
         self, url: str, params: dict[str, str], headers: dict[str, str], symbol: str
     ) -> list[RawStockPrice]:
 
-        async with self.semaphore, self.session.get(
-            url=url,
-            headers=headers,
-            params=params,
-            timeout=aiohttp.ClientTimeout(total=float(API_TIMEOUT)),
-        ) as response:
+        async with (
+            self.semaphore,
+            self.session.get(
+                url=url,
+                headers=headers,
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=float(API_TIMEOUT)),
+            ) as response,
+        ):
             if response.status == 429:
                 self.logger.warning(
                     "Tiingo rate limit hit for %s; retrying with backoff...", symbol

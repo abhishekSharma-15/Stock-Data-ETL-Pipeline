@@ -15,8 +15,7 @@ from src.utils.models import (
 class Extractor(Protocol):
     async def extract(
         self, symbol: str, from_date: date | None = None, to_date: date | None = None
-    ) -> ExtractorResult: 
-        ...
+    ) -> ExtractorResult: ...
 
 
 class Parser(Protocol):
