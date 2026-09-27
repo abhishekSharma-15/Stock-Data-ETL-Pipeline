@@ -7,11 +7,15 @@ from src.utils.interface import FeatureCalculator
 
 @dataclass
 class VolumeFeaturesCalculator(FeatureCalculator):
-    window: int = 20
+    windows: tuple[int, ...] = (20, 50)
 
     def calculate(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        ma_col = f"volume_ma_{self.window}d"
-        df[ma_col] = df["volume"].rolling(self.window, min_periods=self.window).mean()
-        df[f"volume_ratio_{self.window}d"] = df["volume"] / df[ma_col]
+
+        for window in self.windows:
+            ma_col = f"volume_ma_{window}d"
+            ratio_col = f"volume_ratio_{window}d"
+
+            df[ma_col] = df["volume"].rolling(window=window, min_periods=window).mean()
+            df[ratio_col] = df["volume"] / df[ma_col]
         return df

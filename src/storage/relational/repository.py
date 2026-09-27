@@ -4,7 +4,10 @@ import pandas as pd
 
 from src.storage.relational.operations.executor import SQLExecutor
 from src.storage.relational.queries.stock_info import INSERT_STOCK_INFO
-from src.storage.relational.queries.stock_prices import GET_LATEST_DATE
+from src.storage.relational.queries.stock_prices import (
+    GET_LATEST_DATE,
+    INSERT_STOCK_PRICES,
+)
 from src.utils.interface import RelationalRepo
 from src.utils.models import StockMetaData
 
@@ -38,7 +41,31 @@ class RelationalRepository(RelationalRepo):
         stock_id: int,
         data: pd.DataFrame,
     ) -> None:
-        await self.executor.execute(query=GET_LATEST_DATE, params={})
+
+        params = [
+            {
+                "stock_id": stock_id,
+                "date": row["date"],
+                "open": row["open"],
+                "high": row["high"],
+                "low": row["low"],
+                "close": row["close"],
+                "volume": row["volume"],
+                "daily_return": row["daily_return"],
+                "log_return": row["log_return"],
+                "intraday_range": row["intraday_range"],
+                "intraday_return": row["intraday_return"],
+                "ma_20d": row["ma_20d"],
+                "ma_50d": row["ma_50d"],
+                "volatility_20d": row["volatility_20d"],
+                "volatility_20d_annualized": row["volatility_20d_annualized"],
+                "volume_ma_20d": row["volume_ma_20d"],
+                "volume_ratio_50d": row["volume_ratio_50d"],
+            }
+            for _, row in data.iterrows()
+        ]
+
+        await self.executor.execute(query=INSERT_STOCK_PRICES, params=params)
 
     # def load_daily_prices(self, df: pd.DataFrame, stock_id: int):
 

@@ -13,7 +13,6 @@ class StockParser(Parser):
         self.logger = logger
 
     def parse_meta(self, symbol: str, data: dict[str, str]) -> StockMetaData:
-
         return StockMetaData(
             symbol=symbol, company_name=data["name"], exchange=data["exchangeCode"]
         )

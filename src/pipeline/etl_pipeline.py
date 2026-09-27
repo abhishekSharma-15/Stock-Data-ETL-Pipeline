@@ -56,8 +56,8 @@ class StockETLPipeline:
     async def _store_raw_data(
         self,
         payload: list[RawStockPrice],
-        start_date: str,
-        last_update_date: str | None = None,
+        start_date: date,
+        last_update_date: date | None = None,
     ) -> None:
 
         if last_update_date is None:
@@ -75,6 +75,7 @@ class StockETLPipeline:
             last_update_date = await self.relational_repository.get_latest_date(
                 symbol=self.symbol
             )
+
             start_date = (
                 self.start_date if last_update_date is None else last_update_date
             )
@@ -87,20 +88,23 @@ class StockETLPipeline:
                 )
                 return PipelineResult(symbol=self.symbol, status=PipelineStatus.NO_DATA)
 
-            await asyncio.gather(
-                self._store_meta_data(payload=raw_data.meta),
+            tasks = [
                 self._store_raw_data(
                     payload=raw_data.data,
-                    start_date=str(start_date),
-                    last_update_date=str(last_update_date),
-                ),
-            )
+                    start_date=self.start_date,
+                    last_update_date=last_update_date,
+                )
+            ]
+
+            if last_update_date is None:
+                tasks.append(self._store_meta_data(payload=raw_data.meta))
+
+            await asyncio.gather(*tasks)
 
             parsed_meta = self.parser.parse_meta(symbol=self.symbol, data=raw_data.meta)
             parsed_data = self.parser.parse_data(data=raw_data.data)
 
             transformed_data = self.transformer.transform(data=parsed_data)
-            print(transformed_data.columns)
 
             stock_id = await self.relational_repository.insert_stock_info(
                 data=parsed_meta
@@ -112,7 +116,9 @@ class StockETLPipeline:
                 )
                 return PipelineResult(symbol=self.symbol, status=PipelineStatus.NO_DATA)
 
-            # await self.relational_repository.upsert_daily_prices(data=transformed_data)
+            await self.relational_repository.upsert_daily_prices(
+                stock_id=stock_id, data=transformed_data
+            )
 
             return PipelineResult(
                 symbol=self.symbol,

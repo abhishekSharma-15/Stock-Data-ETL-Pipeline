@@ -12,6 +12,14 @@ from src.utils.models import (
 )
 
 
+class StockDataClient(Protocol):
+    async def fetch_meta(self, symbol: str) -> dict: ...
+
+    async def fetch_data(
+        self, symbol: str, start_date: str, end_date: str
+    ) -> list[RawStockPrice]: ...
+
+
 class Extractor(Protocol):
     async def extract(
         self, symbol: str, from_date: date | None = None, to_date: date | None = None

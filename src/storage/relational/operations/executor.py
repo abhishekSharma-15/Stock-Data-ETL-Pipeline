@@ -23,7 +23,7 @@ class SQLExecutor:
     async def execute(
         self,
         query: str,
-        params: dict[str, Any] | None = None,
+        params: list[dict[str, Any]] | None = None,
     ) -> None:
         async with self.engine.begin() as conn:
             await conn.execute(

@@ -2,6 +2,7 @@ import asyncio
 
 import aiohttp
 
+from src.extract.clients.tiingo_client import TiingoClient
 from src.extract.stock_extractor import StockExtractor
 from src.orchestration.orchestrator import StockOrchestrator
 from src.storage.object.bucket import configure_versioning
@@ -32,11 +33,10 @@ async def main():
         semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
 
         async with aiohttp.ClientSession() as session:
-            extractor = StockExtractor(
-                logger=logger,
-                session=session,
-                semaphore=semaphore,
+            extractor_client = TiingoClient(
+                logger=logger, session=session, semaphore=semaphore
             )
+            extractor = StockExtractor(logger=logger, client=extractor_client)
             parser = StockParser(logger=logger)
             transformer = StockTransformer(logger=logger)
             executor = SQLExecutor(engine=engine)

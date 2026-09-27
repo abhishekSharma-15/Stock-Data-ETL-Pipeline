@@ -36,6 +36,7 @@ airflow/__pycache__/
 
 # Environment variables
 .env
+.venv
 
 # Data files (raw data should not be in git)
 data/
